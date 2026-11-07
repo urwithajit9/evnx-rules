@@ -20,9 +20,12 @@ if [ "$want" != "$got" ]; then
     exit 1
 fi
 tar -xzf "$work/$asset" -C "$work"
-install -m 0755 "$(find "$work" -name evnx -type f | head -n1)" "$bin/evnx"
+# The tarball holds one file, named after the target, not `evnx`.
+install -m 0755 "$work/evnx-x86_64-unknown-linux-musl" "$bin/evnx"
 
-if ! "$bin/evnx" scan rules test --help >/dev/null 2>&1; then
+# ⚠️ Not `scan rules test --help`: an evnx before 0.13 reads `rules` and
+# `test` as paths and prints scan's own help, exit 0. It rejects `--json`.
+if ! "$bin/evnx" scan rules list --json >/dev/null 2>&1; then
     echo "the latest release ($("$bin/evnx" --version)) has no \`scan rules\`; building evnx main"
     cargo install --git https://github.com/urwithajit9/evnx --branch main --locked \
         --features net --root "$work/build" evnx
