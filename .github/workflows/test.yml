@@ -1,0 +1,52 @@
+name: Packs
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Index and packs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # A pack change without its hash change, or a pack missing from the
+      # index, fails here, before anything is downloaded.
+      - name: index.toml matches packs/
+        run: python3 -I scripts/check-index.py
+
+      - name: Install evnx
+        run: bash scripts/install-evnx.sh
+
+      # Each pack loads in the current evnx: every rule compiles, and its
+      # positive and near_miss fixtures, where it has them, pass.
+      - name: evnx scan rules test
+        run: |
+          for f in packs/*.toml; do
+            echo "== $f"
+            evnx scan rules test "$f"
+          done
+
+      # The path a user takes: by name, from this checkout served locally, with
+      # the sha256 check against the index.
+      - name: evnx scan rules add, from the catalogue
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 >/dev/null 2>&1 &
+          server=$!
+          trap 'kill $server' EXIT
+          sleep 1
+          project=$(mktemp -d)
+          cd "$project"
+          export EVNX_RULES_CATALOGUE=http://127.0.0.1:8765/index.toml
+          export EVNX_CONFIG_DIR="$project/home"
+          for name in $(python3 -I -c 'import tomllib,sys;print(" ".join(p["name"] for p in tomllib.load(open(sys.argv[1],"rb"))["pack"]))' "$GITHUB_WORKSPACE/index.toml"); do
+            evnx scan rules add "$name"
+          done
+          echo "nothing here" > a.txt
+          evnx scan a.txt
+        working-directory: ${{ github.workspace }}
