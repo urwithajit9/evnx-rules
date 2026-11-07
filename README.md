@@ -4,10 +4,11 @@ The rule catalogue for [`evnx scan`](https://github.com/urwithajit9/evnx): optio
 tested packs of secret-detection rules that you add to a project or to your own
 machine, on request, and that evnx checks byte for byte before every scan.
 
-> ⚠️ **Status: planned for evnx v0.13.0. Nothing here is usable yet.** The commands
-> marked *planned* below do not exist in any released evnx. This README is the
-> design the CLI is being built to, and it will be corrected as the work lands. The
-> full plan lives in the evnx v0.13.0 release plan (batches C2, C6 and C7).
+> ⚠️ **Status: works with evnx v0.13.0, which is not released yet.** The first pack,
+> `gitleaks`, is here and `evnx scan rules add gitleaks` fetches it, but only an evnx
+> built from `main` has that command until the v0.13.0 release. Sections below that
+> say *planned* were the design; the importer table and the layout reflect what was
+> built.
 
 ---
 
@@ -124,7 +125,7 @@ a rule for her side project's tokens in `~/.config/evnx/rules/`. It applies only
 laptop, and every scan she runs says so in its header:
 
 ```
-Rules: 61 core · 218 project (.evnx/rules: gitleaks) · 1 personal (~/.config/evnx/rules)
+Rules: 36 core · 221 project (.evnx/rules: gitleaks) · 1 personal (~/.config/evnx/rules)
 ```
 
 So when Asha sees a finding CI doesn't, the header tells her why.
@@ -147,7 +148,7 @@ sequenceDiagram
 
     U->>E: evnx scan rules add gitleaks
     E->>G: GET index.toml
-    G-->>E: gitleaks → packs/gitleaks.toml, sha256 9f3c…, 218 rules
+    G-->>E: gitleaks → packs/gitleaks.toml, sha256 b69ef5d8…, 221 rules
     E->>G: GET packs/gitleaks.toml
     G-->>E: file bytes
     E->>E: sha256(bytes) == 9f3c… ?
@@ -157,7 +158,7 @@ sequenceDiagram
         E->>E: parse, compile every regex, check ids against the core
         E->>D: write rules/gitleaks.toml
         E->>D: add entry to rules.lock
-        E-->>U: added gitleaks: 218 rules (4 skipped: listed)
+        E-->>U: added gitleaks: 221 rules (1 skipped: listed)
     end
 ```
 
@@ -165,13 +166,14 @@ The lock entry records where the pack came from and exactly what was added:
 
 ```toml
 # .evnx/rules.lock is written by evnx. Commit it with .evnx/rules/
-[[pack]]
-name   = "gitleaks"
-source = "https://raw.githubusercontent.com/urwithajit9/evnx-rules/main/packs/gitleaks.toml"
+[[packs]]
+name = "gitleaks"
+kind = "catalogue"
+source = "gitleaks"
 format = "evnx"
-sha256 = "9f3c…"
-rules  = 218
-added  = "2026-11-14"
+sha256 = "b69ef5d8…"
+rules = 221
+added = "2026-11-14"
 ```
 
 `evnx scan rules update gitleaks` fetches the pack again and shows what changed: the
@@ -309,12 +311,15 @@ own format.
 
 | gitleaks field | evnx field | Note |
 |---|---|---|
-| `id` | `id` | kept, so ids match gitleaks reports |
+| `id` | `id` | with `gitleaks-` in front, so it can never collide with an evnx id |
 | `description` | `name` | |
-| `regex` | `regex` | Go RE2 → Rust `regex`; nearly identical syntax, and both run in linear time |
-| `keywords` | `keywords` | |
+| `regex` | `regex` | Go RE2 → Rust `regex`. Go's `\w`, `\d` and `\s` are ASCII, so they become explicit ASCII classes: the rule matches what it matched in gitleaks, and stays under the compile-size limit |
+| `secretGroup` | `secret_group` | else group 1 when the regex has one: the secret is what is judged, reported and masked |
+| `keywords` | `keywords` | a prefilter: the rule is tried only on text holding one. Without it 221 rules in one regex set are several times slower |
 | `entropy` | `entropy` | |
-| `allowlists[].regexes` | `fixtures.near_miss` guard | kept as exclusions |
+| `allowlists[].regexes` | `allow`, or `allow_line` for `regexTarget = "line"` | a match they hit is not reported |
+| `allowlists[].stopwords` | one case-insensitive `allow` expression | a secret containing one is not reported |
+| `allowlists` with `paths` or `commits` | — | dropped whole and counted: evnx cannot express them (4 rules in v8.30.1) |
 | — | `severity` | `medium` (gitleaks has no severity) |
 | — | `confidence` | `medium` |
 
@@ -364,7 +369,7 @@ Planned packs, in order:
 
 ## This repository
 
-Planned layout:
+Layout:
 
 ```
 evnx-rules/
@@ -389,7 +394,7 @@ version = 1
 name        = "gitleaks"
 path        = "packs/gitleaks.toml"
 sha256      = "9f3c…"
-rules       = 218
+rules       = 221
 licence     = "MIT"
 upstream    = "https://github.com/gitleaks/gitleaks"
 commit      = "<pinned sha>"
@@ -493,6 +498,6 @@ community's knowledge of token formats instead of reinventing it.
 ## Licence
 
 The catalogue's own files (the index, tooling and documentation) are intended to be MIT,
-matching evnx; a `LICENSE` file will be added with the first pack. **Each pack carries
+matching evnx (`LICENSE`). **Each pack carries
 its upstream's licence**, stated in its header and in `LICENSES/`. A pack converted from
 a CC-BY-SA-4.0 source is itself CC-BY-SA-4.0.
