@@ -14,3 +14,13 @@ licence     = "MIT"
 upstream    = "https://github.com/gitleaks/gitleaks"
 commit      = "83d9cd684c87d95d656c1458ef04895a7f1cbd8e"
 description = "gitleaks' default rule set (v8.30.1), converted to evnx format"
+
+[[pack]]
+name        = "betterleaks"
+path        = "packs/betterleaks.toml"
+sha256      = "05c06010de8b1b573c9f83388e390a3935e7a80eb9372f5dff526fe1b1103494"
+rules       = 426
+licence     = "MIT"
+upstream    = "https://github.com/betterleaks/betterleaks"
+commit      = "44b3e1de15164eab35c41b393a44e2fcf33cabfc"
+description = "Betterleaks' default rule set (main 2026-11-07), converted to evnx format; a superset of gitleaks, add one or the other"
