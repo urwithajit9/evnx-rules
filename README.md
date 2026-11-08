@@ -323,6 +323,19 @@ own format.
 | — | `severity` | `medium` (gitleaks has no severity) |
 | — | `confidence` | `medium` |
 
+**Betterleaks** (the gitleaks fork) uses the same command and format, with a few
+fields more (needs evnx with C13):
+
+| Betterleaks field | evnx field | Note |
+|---|---|---|
+| `id` | `id` | with `betterleaks-` in front |
+| `confidence` | `confidence` | `low`, `medium` or `high`; anything else becomes `medium` |
+| `valueGroup` | `secret_group` | Betterleaks' name for `secretGroup` |
+| `filter` (CEL) | `entropy` | only a leading `entropy(finding["secret"]) < N` (or `<=`) clause, as the floor N. Anything after it (`tokenRatio`, path matches) is dropped, and the rule is counted in the pack header |
+| `components` | — | a composite's parts are not required; the rule is counted |
+| `skipReport = true` | — | the rule is skipped and listed: it exists only as part of a composite |
+| `validate`, `analyze`, `revoke` | — | not carried over: a scan never touches the network |
+
 A rule whose regex does not compile under Rust `regex` is **listed and skipped**, never
 silently dropped. The importer prints how many rules were converted and which were not,
 and the pack's header in this repository records the same.
@@ -341,12 +354,12 @@ The full list, with licences, rule counts and how each may be used, is in
 | Reference only | TruffleHog (AGPL), GitHub's list of supported patterns, ggshield | coverage checklists; nothing copied |
 | Excluded | semgrep-rules | its licence restricts redistribution |
 
-Planned packs, in order:
+Packs, shipped and planned:
 
 | Pack | From | Licence | Rules (approx.) | Status |
 |---|---|---|---|---|
-| `gitleaks` | gitleaks `config/gitleaks.toml` | MIT | 222 | first, with v0.13.0 |
-| `betterleaks` | Betterleaks `config/betterleaks.toml` | MIT | 474 | after `gitleaks`, once its schema is confirmed |
+| `gitleaks` | gitleaks `config/gitleaks.toml` | MIT | 221 | ✅ shipped, v8.30.1 |
+| `betterleaks` | Betterleaks `config/betterleaks.toml` | MIT | 426 | ✅ shipped, main 2026-11-07. A superset of `gitleaks`: add one or the other |
 | `noseyparker` | Nosey Parker `rules/*.yml` | Apache-2.0 | 87 files | one pinned import, because upstream is archived |
 | `patterns-db` | secrets-patterns-db `rules-stable.yml` | CC-BY-SA-4.0 | 1,610 | opt-in "large" pack, only after measuring its noise |
 
@@ -378,6 +391,7 @@ evnx-rules/
 ├── index.toml           the catalogue: name → path, sha256, rule count, licence
 ├── packs/
 │   ├── gitleaks.toml    header: upstream URL, pinned commit, licence, converted/skipped
+│   ├── betterleaks.toml same, for Betterleaks
 │   └── …
 ├── LICENSES/            upstream licence texts, one per source
 └── .github/workflows/
