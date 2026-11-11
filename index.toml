@@ -24,3 +24,13 @@ licence     = "MIT"
 upstream    = "https://github.com/betterleaks/betterleaks"
 commit      = "44b3e1de15164eab35c41b393a44e2fcf33cabfc"
 description = "Betterleaks' default rule set (main 2026-11-07), converted to evnx format; a superset of gitleaks, add one or the other"
+
+[[pack]]
+name        = "evnx"
+path        = "packs/evnx.toml"
+sha256      = "4090e43b34e65ec37991a7d32257562c28251e4945415db1fc4ae1a293f7f6bf"
+rules       = 1
+licence     = "MIT"
+upstream    = "https://github.com/urwithajit9/evnx-rules"
+commit      = "n/a (maintained here, not mirrored)"
+description = "evnx-specific rules that the mirrored packs miss, such as stateless GitHub App installation tokens; add alongside gitleaks or betterleaks"

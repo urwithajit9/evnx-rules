@@ -1,0 +1,35 @@
+# evnx-specific rules for `evnx scan`, maintained here rather than mirrored.
+#
+# Upstream: none. These rules are written and owned by evnx-rules, so a re-sync
+# of the gitleaks or Betterleaks packs never touches them. Each one exists
+# because an upstream rule misses a format; the upstream rule is left as is.
+#
+# MIT License, as the rest of https://github.com/urwithajit9/evnx-rules.
+#
+# Add it with `evnx scan rules add evnx`.
+
+version = 1
+
+# GitHub App installation tokens, including the Actions GITHUB_TOKEN, became
+# `ghs_<appid>_<header>.<payload>.<signature>` (about 520 characters; the three
+# parts are base64url) in the rollout completed on 2026-10-02. The classic
+# `(?:ghu|ghs)_[0-9a-zA-Z]{36}` rules in the gitleaks and Betterleaks packs do
+# not match it, and stay for the 40-character form.
+#
+# The last segment ends on a base64url character, so a full stop that ends a
+# sentence is not swallowed.
+#
+# Fixtures are short placeholders, not realistic tokens. The regex is also
+# checked against a token built from parts by scripts/test-evnx-pack.py.
+[[rules]]
+id = "evnx-github-app-installation-token"
+name = "GitHub App installation token (stateless ghs_<appid>_<JWT> form)"
+regex = 'ghs_[0-9]+_[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+'
+keywords = ["ghs_"]
+provider = "GitHub"
+category = "source-ci"
+confidence = "high"
+severity = "medium"
+url = "https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-an-installation-access-token-for-a-github-app"
+positive = ["ghs_12345_aaaa.bbbb.cccc", "token: ghs_7_a-b_c.d-e_f.g-h_i."]
+near_miss = ["ghs_12345_aaaa.bbbb", "ghs_abc_aaaa.bbbb.cccc", "ghs_12345_aaaa", "ghp_12345_aaaa.bbbb.cccc"]
