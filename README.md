@@ -392,6 +392,7 @@ evnx-rules/
 ├── packs/
 │   ├── gitleaks.toml    header: upstream URL, pinned commit, licence, converted/skipped
 │   ├── betterleaks.toml same, for Betterleaks
+│   ├── evnx.toml        evnx's own rules, not mirrored: a re-sync of the packs above never touches it
 │   └── …
 ├── LICENSES/            upstream licence texts, one per source
 └── .github/workflows/

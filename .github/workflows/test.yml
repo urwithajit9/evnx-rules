@@ -20,6 +20,9 @@ jobs:
       - name: index.toml matches packs/
         run: python3 -I scripts/check-index.py
 
+      - name: evnx pack rules match tokens built from parts
+        run: python3 -I scripts/test-evnx-pack.py
+
       - name: Install evnx
         run: bash scripts/install-evnx.sh
 
